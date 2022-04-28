@@ -20,14 +20,17 @@ interface IRope {
   toString: () => string,
   size: () => number,
   height: () => number,
+  // leftHeight: () => number,
+  // rightHeight: () => number,
   toMap: () => MapRepresentation,
   isBalanced: () => Boolean
+  weight: () => number,
 }
 
 export class RopeLeaf implements IRope {
   text: string;
 
-  // Note: depending on your implementation, you may want to to change this constructor
+  // Note: depending on your implementation, you may want to change this constructor
   constructor(text: string) {
     this.text = text;
   }
@@ -55,12 +58,17 @@ export class RopeLeaf implements IRope {
   isBalanced() {
     return true;
   }
+
+  weight(): number {
+    return this.text.length;
+  }
 }
 
 export class RopeBranch implements IRope {
   left: IRope;
   right: IRope;
   cachedSize: number;
+  cachedWeight: number;
 
   constructor(left: IRope, right: IRope) {
     this.left = left;
@@ -68,30 +76,35 @@ export class RopeBranch implements IRope {
     // Please note that this is defined differently from "weight" in the Wikipedia article.
     // You may wish to rewrite this property or create a different one.
     this.cachedSize = (left ? left.size() : 0) +
-      (right ? right.size() : 0)
+        (right ? right.size() : 0)
+    this.cachedWeight = (left ? left.size() : 0)
   }
 
   // how deep the tree is (I.e. the maximum depth of children)
   height(): number {
     return 1 + Math.max(this.leftHeight(), this.rightHeight())
   }
-  
+
   // Please note that this is defined differently from "weight" in the Wikipedia article.
   // You may wish to rewrite this method or create a different one.
-  size() {
+  size(): number {
     return this.cachedSize;
+  }
+
+  weight(): number {
+    return this.cachedWeight;
   }
 
   /*
     Whether the rope is balanced, i.e. whether any subtrees have branches
-    which differ by more than one in height. 
+    which differ by more than one in height.
   */
   isBalanced(): boolean {
     const leftBalanced = this.left ? this.left.isBalanced() : true
     const rightBalanced = this.right ? this.right.isBalanced() : true
 
     return leftBalanced && rightBalanced
-      && Math.abs(this.leftHeight() - this.rightHeight()) < 2
+        && Math.abs(this.leftHeight() - this.rightHeight()) < 2
   }
 
   leftHeight(): number {
@@ -105,7 +118,7 @@ export class RopeBranch implements IRope {
   }
 
   // Helper method which converts the rope into an associative array
-  // 
+  //
   // Only used for debugging, this has no functional purpose
   toMap(): MapBranch {
     const mapVersion: MapBranch = {
@@ -119,10 +132,9 @@ export class RopeBranch implements IRope {
 
   toString(): string {
     return (this.left ? this.left.toString() : '')
-      + (this.right ? this.right.toString() : '')
+        + (this.right ? this.right.toString() : '')
   }
 }
-
 
 export function createRopeFromMap(map: MapRepresentation): IRope {
   if (map.kind == 'leaf') {
@@ -135,20 +147,63 @@ export function createRopeFromMap(map: MapRepresentation): IRope {
   return new RopeBranch(left, right);
 }
 
-// This is an internal API. You can implement it however you want. 
+// This is an internal API. You can implement it however you want.
 // (E.g. you can choose to mutate the input rope or not)
 function splitAt(rope: IRope, position: number): { left: IRope, right: IRope } {
-  // TODO
+  if (rope instanceof RopeLeaf) {
+    return {
+      left: new RopeLeaf(rope.text.substring(0, position)),
+      right: new RopeLeaf(rope.text.substring(position))
+    };
+  } else if (rope instanceof RopeBranch) {
+    if (rope.weight() > position) {
+      const splitRopes = splitAt(rope.left, position)
+      return {
+        left: splitRopes.left,
+        right: new RopeBranch(splitRopes.right, rope.right)
+      }
+    } else if (rope.weight() === position) {
+      return {
+        left: rope.left,
+        right: rope.right
+      }
+    } else {
+      const splitRopes = splitAt(rope.right, rope.size() - position)
+      return {
+        left: new RopeBranch(rope.left, splitRopes.left),
+        right: splitRopes.right
+      }
+    }
+  } else {
+    // rope should either be RopeLeaf or RopeBranch, not sure off top of head how to get typescript to realise that
+    throw 'Am confused :s'
+  }
+}
+
+export function insert(rope: IRope, text: string, location: number): IRope {
+  if (location == 0) {
+    return new RopeBranch(new RopeLeaf(text), rope)
+  } else if (rope.size() === location) {
+    return new RopeBranch(rope, new RopeLeaf(text))
+  } else {
+    const splitRopes: {left: IRope, right: IRope} = splitAt(rope, location)
+    const subRope = new RopeBranch(splitRopes.left, new RopeLeaf(text))
+
+    return new RopeBranch(subRope, splitRopes.right)
+  }
+}
+
+function concatenate(left: IRope, right: IRope): IRope {
+
+  return
 }
 
 export function deleteRange(rope: IRope, start: number, end: number): IRope {
   // TODO
+  return
 }
-
-export function insert(rope: IRope, text: string, location: number): IRope {
-  // TODO
-}
-
-export function rebalance(rope: IRope): IRope {
-  // TODO
-}
+//
+// export function rebalance(rope: IRope): IRope {
+//   // TODO
+//   return
+// }
