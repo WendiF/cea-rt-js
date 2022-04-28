@@ -198,8 +198,36 @@ export function deleteRange(rope: IRope, start: number, end: number): IRope {
   const splitLeft = splitAt(rope, start)
   return new RopeBranch(splitLeft.left, splitRight.right)
 }
-//
-// export function rebalance(rope: IRope): IRope {
-//   // TODO
-//   return
-// }
+
+export function getLeavesFromRope(rope: IRope): RopeLeaf[] {
+  if (rope instanceof RopeLeaf)
+    return [rope]
+  else if (rope instanceof RopeBranch) {
+    return getLeavesFromRope(rope.left).concat(getLeavesFromRope(rope.right))
+  }
+}
+
+export function joinRopes(ropes: IRope[], size: number): IRope {
+  const midpoint = Math.floor(size / 2)
+  let sum = 0;
+  let i = 0
+  while (sum < midpoint) {
+    sum += ropes[i].size()
+    i++
+  }
+  if (sum === 0) {
+    return new RopeBranch(ropes[0], joinRopes(ropes.slice(1), size))
+  } else {
+    return new RopeBranch(joinRopes(ropes.slice(0, i), sum), joinRopes(ropes.slice(i), size - sum))
+  }
+}
+
+export function rebalance(rope: IRope): IRope {
+  if (rope.isBalanced) {
+    return rope
+  } else {
+    const leaves = getLeavesFromRope(rope)
+    leaves.forEach(leaf => console.error("QQQQQQQQQQQQQ", leaf.toMap()))
+    return joinRopes(leaves, rope.size())
+  }
+}
