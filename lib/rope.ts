@@ -193,14 +193,10 @@ export function insert(rope: IRope, text: string, location: number): IRope {
   }
 }
 
-function concatenate(left: IRope, right: IRope): IRope {
-
-  return
-}
-
 export function deleteRange(rope: IRope, start: number, end: number): IRope {
-  // TODO
-  return
+  const splitRight = splitAt(rope, end)
+  const splitLeft = splitAt(rope, start)
+  return new RopeBranch(splitLeft.left, splitRight.right)
 }
 //
 // export function rebalance(rope: IRope): IRope {
