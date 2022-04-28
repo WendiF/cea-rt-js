@@ -208,26 +208,28 @@ export function getLeavesFromRope(rope: IRope): RopeLeaf[] {
 }
 
 export function joinRopes(ropes: IRope[], size: number): IRope {
+  if (ropes.length == 2) {
+    return new RopeBranch(ropes[0], ropes[1]);
+  }
   const midpoint = Math.floor(size / 2)
   let sum = 0;
   let i = 0
-  while (sum < midpoint) {
+  while (sum <= midpoint) {
     sum += ropes[i].size()
     i++
   }
-  if (sum === 0) {
-    return new RopeBranch(ropes[0], joinRopes(ropes.slice(1), size))
+  if (i === 0) {
+    return new RopeBranch(ropes[0], joinRopes(ropes.slice(1), size - ropes[0].size()))
   } else {
     return new RopeBranch(joinRopes(ropes.slice(0, i), sum), joinRopes(ropes.slice(i), size - sum))
   }
 }
 
 export function rebalance(rope: IRope): IRope {
-  if (rope.isBalanced) {
+  if (rope.isBalanced()) {
     return rope
   } else {
     const leaves = getLeavesFromRope(rope)
-    leaves.forEach(leaf => console.error("QQQQQQQQQQQQQ", leaf.toMap()))
     return joinRopes(leaves, rope.size())
   }
 }

@@ -58,20 +58,6 @@ describe("deletion", () => {
 });
 
 describe('Extra Credit: tree is rebalanced', () => {
-  const rope = createRopeFromMap({
-    kind: 'branch',
-    left: { kind: 'leaf', text: 'a' },
-    right: {
-      kind: 'branch',
-      left: { kind: 'leaf', text: 'b' },
-      right: {
-        kind: 'branch',
-        left: { kind: 'leaf', text: 'c' },
-        right: { kind: 'leaf', text: 'd' }
-      }
-    },
-  })
-  console.error(joinRopes(getLeavesFromRope(rope)))
   expect(rebalance(createRopeFromMap({
     kind: 'branch',
     left: { kind: 'leaf', text: 'a' },
